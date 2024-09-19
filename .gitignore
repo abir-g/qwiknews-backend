@@ -1,0 +1,45 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.env
+
+# Django
+db.sqlite3
+/static/
+/media/
+/*.log
+
+# Virtual environments
+env/
+venv/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Migrations
+*/migrations/*
+
+# Ignore all local settings
+settings_local.py
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+
+# Testing
+.coverage
+*.cover
+.tox/
+nosetests.xml
+coverage.xml
+*.egg-info/
+dist/
+build/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
