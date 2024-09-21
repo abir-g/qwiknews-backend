@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import Newscard, Category
+from .models import NewsCard, Category
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)  # Columns to display in the list view
     search_fields = ('name',)  # Fields to search by
 
-@admin.register(Newscard)
+@admin.register(NewsCard)
 class NewscardAdmin(admin.ModelAdmin):
     list_display = ('title', 'summary', 'link', 'image')  # Columns to display in the list view
     search_fields = ('title', 'summary', 'link')  # Fields to search by

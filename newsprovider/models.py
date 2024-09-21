@@ -8,7 +8,7 @@ class Category(models.Model):
         return self.name
 
 
-class Newscard(models.Model):
+class NewsCard(models.Model):
     title = models.CharField(max_length=255)
     summary = models.TextField()
     image = models.ImageField(upload_to='news_images/')
