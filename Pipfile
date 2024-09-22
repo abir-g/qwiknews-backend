@@ -9,6 +9,7 @@ pillow = "*"
 mysqlclient = "*"
 djangorestframework = "*"
 openai = "*"
+requests = "*"
 
 [dev-packages]
 

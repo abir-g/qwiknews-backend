@@ -11,7 +11,7 @@ class Category(models.Model):
 class NewsCard(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
-    summary = models.TextField()
+    summary = models.TextField(null=True, blank=True)
     image = models.ImageField(upload_to='news_images/')
     link = models.URLField(max_length=500)
     is_summarized = models.BooleanField(default=False)
