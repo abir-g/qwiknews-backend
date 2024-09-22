@@ -10,6 +10,8 @@ mysqlclient = "*"
 djangorestframework = "*"
 openai = "*"
 requests = "*"
+celery = "*"
+redis = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"

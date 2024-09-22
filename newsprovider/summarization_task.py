@@ -35,8 +35,8 @@ def summarize_article(article):
         print(f"Error summarizing article {article.id}: {e}")
         return None
 
-def process_summarized_articles():
-    articles = fetch_unsummarized_articles()
+def process_summarized_articles(articles):
+    # articles = fetch_unsummarized_articles()
     
     for article in articles:
         summary = summarize_article(article)
@@ -50,4 +50,4 @@ def process_summarized_articles():
             except Exception as e:
                 print(f"Transaction failed for article {article.id}: {e}")
 
-process_summarized_articles()
+# process_summarized_articles()
