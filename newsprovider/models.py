@@ -26,3 +26,10 @@ class AppUser(models.Model):
     
     def __str__(self) -> str:
         return f"{self.user.username}"
+    
+class ExternalArticleID(models.Model):
+    external_id = models.IntegerField(unique=True)
+    news_card = models.OneToOneField('NewsCard', on_delete=models.CASCADE, related_name='external_article_id', null=True)
+
+    def __str__(self) -> str:
+        return str(self.external_id)

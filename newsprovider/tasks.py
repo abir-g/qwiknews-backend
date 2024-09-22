@@ -1,13 +1,24 @@
+import os
+import django
 from openai import OpenAI
-from .models import NewsCard
-from .ai_prompt import prompt
 from django.conf import settings
 from django.db import transaction
 
+# Set the environment variable for Django settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
+
+# Initialize Django
+django.setup()
+
+from newsprovider.models import NewsCard  # Adjust 'yourapp' to your actual app name
+from newsprovider.ai_prompt import prompt  # Adjust 'yourapp' to your actual app name
+
+
+# Initialize OpenAI client
 client = OpenAI()
 
 def fetch_unsummarized_articles():
-    return NewsCard.objects.filter(is_summarized=False)
+    return NewsCard.objects.filter(is_summarized=False, id__gt=100)
 
 def summarize_article(article):
     try:
@@ -18,7 +29,8 @@ def summarize_article(article):
                 {'role': 'user', 'content': article.content},
             ]
         )
-        return completion['choices'][0]['message']['content']
+        print(f'Article {article.id} summarized SUCCESSFULLY')
+        return completion.choices[0].message.content
     except Exception as e:
         print(f"Error summarizing article {article.id}: {e}")
         return None
@@ -37,3 +49,5 @@ def process_summarized_articles():
                     article.save()
             except Exception as e:
                 print(f"Transaction failed for article {article.id}: {e}")
+
+process_summarized_articles()
