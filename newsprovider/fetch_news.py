@@ -13,7 +13,7 @@ from newsprovider.models import ExternalArticleID, NewsCard
 API_KEY = "7346c6661e19434f8fb7fdf9eae6e406"
 BASE_URL = "https://api.worldnewsapi.com"
 
-def fetch_news_data(search_query: str | None = None, number: int = 10):
+def fetch_news_data(search_query: str = None, number: int = 10):
     url = f"{BASE_URL}/search-news"
     params = {
         "api-key": API_KEY,
@@ -45,7 +45,7 @@ def save_articles(articles):
                 title=article.get("title"),
                 content=article.get("text"),  
                 summary=None,  
-                image=article.get("image_url", None), 
+                image=article.get("image", None), 
                 link=article.get("url", ""), 
                 is_summarized=False,
             )

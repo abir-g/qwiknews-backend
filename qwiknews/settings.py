@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -143,3 +144,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'core.User'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/1'
+
+
+CELERY_BEAT_SCHEDULE = {
+    'fetch_summarize_save_every_minute': {
+        'task': 'newsprovider.tasks.fetch_summarize_and_save',  # Task name
+        'schedule': crontab(minute='*'),  # Run every minute
+    },
+}
