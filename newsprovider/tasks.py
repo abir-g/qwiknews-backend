@@ -1,7 +1,8 @@
 import time
 from celery import shared_task
 from .fetch_news import fetch_news_data
-from .summarization_task import process_summarized_articles, fetch_unsummarized_articles
+# from .summarization_task import process_summarized_articles, fetch_unsummarized_articles
+from .batch_summarization import fetch_unsummarized_articles, process_summarized_articles
 
 
 @shared_task

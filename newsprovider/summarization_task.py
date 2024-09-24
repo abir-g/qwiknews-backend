@@ -10,8 +10,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
 # Initialize Django
 django.setup()
 
-from newsprovider.models import NewsCard  # Adjust 'yourapp' to your actual app name
-from newsprovider.ai_prompt import prompt  # Adjust 'yourapp' to your actual app name
+from newsprovider.models import NewsCard 
+from newsprovider.ai_prompt import prompt  
 
 
 # Initialize OpenAI client

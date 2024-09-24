@@ -12,7 +12,8 @@ class NewsCard(models.Model):
     title = models.CharField(max_length=255)
     content = models.TextField()
     summary = models.TextField(null=True, blank=True)
-    image = models.ImageField(upload_to='news_images/')
+    # image = models.ImageField(upload_to='news_images/') #This will be used if the image data is being stored locally.
+    image = models.URLField(max_length=600)
     link = models.URLField(max_length=500)
     is_summarized = models.BooleanField(default=False)
     categories = models.ManyToManyField(Category, related_name='newscards')  # Many-to-many relationship

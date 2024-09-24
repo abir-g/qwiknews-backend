@@ -13,7 +13,7 @@ from newsprovider.models import ExternalArticleID, NewsCard
 API_KEY = "7346c6661e19434f8fb7fdf9eae6e406"
 BASE_URL = "https://api.worldnewsapi.com"
 
-def fetch_news_data(search_query: str = None, number: int = 10):
+def fetch_news_data(search_query: str = None, number: int = 30):
     url = f"{BASE_URL}/search-news"
     params = {
         "api-key": API_KEY,
@@ -55,6 +55,7 @@ def save_articles(articles):
                     ExternalArticleID.objects.create(external_id=article['id'], news_card=news_card)
             except Exception as e:
                 print(f"Failed to save article {article.get('id')}: {e}")
+                raise e
         else:
             print(f"Article with ID {article['id']} already exists.")
 
