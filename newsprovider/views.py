@@ -9,10 +9,8 @@ from .pagination import DefaultPagination
 # Create your views here.
 
 
-class NewsCardViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
+class NewsCardViewSet(mixins.ListModelMixin,
                       mixins.RetrieveModelMixin,
-                      mixins.DestroyModelMixin,
                       viewsets.GenericViewSet):
     queryset = NewsCard.objects.all()
     serializer_class = NewsCardSerializer

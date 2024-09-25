@@ -32,9 +32,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
 django.setup()
 
 from newsprovider.models import NewsCard
-from .ai_prompt import prompt
+from .ai_prompt import GPTPrompts
+
+gptprompts = GPTPrompts()
 
 client = OpenAI()
+
+BATCH_SIZE = 10 #Ensure that this batch size remains consistent for all the batch requests (flagging and summarization)
+
 
 # return all the unsummarized articles from the database 
 def fetch_unsummarized_articles():
@@ -45,6 +50,36 @@ def fetch_unsummarized_articles():
 def clean_summary(summary):
     cleaned = re.sub(r'^\d+:\s*', '', summary.strip())
     return cleaned
+
+def batch_flag_articles(articles, batch_size=10):
+    flagged_statuses = [None] * len(articles)
+    
+    for i in range(0, len(articles), batch_size):
+        batch = articles[i:i + batch_size]
+        # Create a prompt to ask the AI about potential privacy walls
+        prompts = [f"{article.content} <<END>>" for article in batch]
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{'role': 'user', 'content': gptprompts.flagger_prompt + "\n\n".join(prompts)}]
+            )
+            
+            # Process the response to get flagged statuses
+            full_response = response.choices[0].message.content
+            print(f"Full MARKER API response: {full_response}")
+            responses = full_response.split(",")  # Assume each response is on a new line
+            
+            for idx, response in enumerate(responses):
+                article_idx = i + idx
+                if article_idx < len(flagged_statuses):
+                    flagged_statuses[article_idx] = "yes" in response.lower()  # Set True/False based on response
+
+            logger.info(f"Batch of {len(batch)} articles flagged successfully")
+        except Exception as e:
+            logger.error(f"Error flagging batch starting at index {i}: {str(e)}")
+    print(f"flagged_statuses: {flagged_statuses}")
+    return flagged_statuses
 
 
 def batch_summarize_articles(articles, batch_size=10):
@@ -62,13 +97,12 @@ def batch_summarize_articles(articles, batch_size=10):
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {'role': 'system', 'content': f"{prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number."},
+                    {'role': 'system', 'content': f"{gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number."},
                     {'role': 'user', 'content': "\n\n".join(prompts)}
                 ]
             )
             
             full_response = response.choices[0].message.content
-            print(f"Full API response: {full_response}")
             
             # Split the response into individual summaries
             summaries = full_response.split("Summary for Article")[1:]  # Remove the first empty split
@@ -82,6 +116,7 @@ def batch_summarize_articles(articles, batch_size=10):
                     # Add the summaries by their index to the initial list
                     all_summaries[article_idx] = summary.strip()
                     logger.debug(f"Processed summary for article at index {article_idx}: {all_summaries[article_idx][:50]}...")
+
             
             logger.info(f"Batch of {len(batch)} articles summarized successfully")
         except Exception as e:
@@ -94,6 +129,7 @@ def batch_summarize_articles(articles, batch_size=10):
 
 def process_summarized_articles(articles):
     summaries = batch_summarize_articles(articles)
+    flagged_statuses = batch_flag_articles(articles)
     
     logger.debug(f"Number of articles: {len(articles)}, Number of summaries: {len(summaries)}")
 
@@ -103,16 +139,18 @@ def process_summarized_articles(articles):
     
     with transaction.atomic():
         # pair each article to a summary
-        for article, summary in zip(articles, summaries):
+        for article, summary, is_flagged in zip(articles, summaries, flagged_statuses):
             if summary:
                 cleaned_summary = clean_summary(summary=summary)
                 article.summary = cleaned_summary
                 article.is_summarized = True
+
+                article.is_flagged = is_flagged
                 article.save()
                 logger.info(f"Article {article.id} updated with summary")
             else:
                 logger.warning(f"Failed to summarize article {article.id}: Empty or None summary")
 
 # Usage
-# articles = fetch_unsummarized_articles()
-# process_summarized_articles(articles)
+articles = fetch_unsummarized_articles()
+process_summarized_articles(articles)
