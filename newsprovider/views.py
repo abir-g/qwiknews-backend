@@ -12,6 +12,22 @@ from .pagination import DefaultPagination
 class NewsCardViewSet(mixins.ListModelMixin,
                       mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet):
-    queryset = NewsCard.objects.filter(is_flagged=0)
     serializer_class = NewsCardSerializer
     pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        queryset = NewsCard.objects.filter(is_flagged=0).order_by('-timestamp')
+
+        # Get the category_id and title search parameter from the URL query parameters
+        category_id = self.kwargs.get('category_id')
+        title_search = self.request.query_params.get('title', None)
+
+        # Filter by category if provided
+        if category_id:
+            queryset = queryset.filter(categories__id=category_id)
+
+        # Filter by title search if provided
+        if title_search:
+            queryset = queryset.filter(title__icontains=title_search)
+
+        return queryset

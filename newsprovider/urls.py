@@ -4,9 +4,10 @@ from .views import NewsCardViewSet
 
 # Create a router and register our viewset with it.
 router = DefaultRouter()
-router.register(r'newscards', NewsCardViewSet)
+router.register(r'newscards', NewsCardViewSet, basename='newscards')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('', include(router.urls)),  # Include the router URLs
+    path('category/<int:category_id>/', NewsCardViewSet.as_view({'get': 'list'}), name='news-by-category'),
 ]
