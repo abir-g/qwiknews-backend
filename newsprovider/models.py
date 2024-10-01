@@ -13,7 +13,7 @@ class NewsCard(models.Model):
     content = models.TextField()
     summary = models.TextField(null=True, blank=True)
     # image = models.ImageField(upload_to='news_images/') #This will be used if the image data is being stored locally.
-    image = models.URLField(max_length=600)
+    image = models.URLField(max_length=600, null=True)
     link = models.URLField(max_length=500)
     is_summarized = models.BooleanField(default=False)
     is_flagged = models.BooleanField(default=False)

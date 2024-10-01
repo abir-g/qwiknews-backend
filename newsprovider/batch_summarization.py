@@ -68,7 +68,7 @@ def batch_flag_articles(articles, batch_size=10):
             # Process the response to get flagged statuses
             full_response = response.choices[0].message.content
             print(f"Full MARKER API response: {full_response}")
-            responses = full_response.split(",")  # Assume each response is on a new line
+            responses = full_response.split(",")  # GPT has been instructed to supply in comma-seperated format
             
             for idx, response in enumerate(responses):
                 article_idx = i + idx
@@ -151,6 +151,6 @@ def process_summarized_articles(articles):
             else:
                 logger.warning(f"Failed to summarize article {article.id}: Empty or None summary")
 
-# Usage
+# # Usage
 articles = fetch_unsummarized_articles()
 process_summarized_articles(articles)

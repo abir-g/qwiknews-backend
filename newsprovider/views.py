@@ -12,6 +12,6 @@ from .pagination import DefaultPagination
 class NewsCardViewSet(mixins.ListModelMixin,
                       mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet):
-    queryset = NewsCard.objects.all()
+    queryset = NewsCard.objects.filter(is_flagged=0)
     serializer_class = NewsCardSerializer
     pagination_class = DefaultPagination

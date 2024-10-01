@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from .models import ExternalArticleID, NewsCard, Category
 
 @admin.register(Category)
@@ -8,10 +8,17 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(NewsCard)
 class NewsCardAdmin(admin.ModelAdmin):
-    list_display = ('title', 'summary', 'link', 'image')  # Columns to display in the list view
+    list_display = ('title', 'summary', 'is_flagged')  # Columns to display in the list view
     search_fields = ('title', 'summary', 'link')  # Fields to search by
-    list_filter = ('categories',)  # Filter by categories
+    list_filter = ('categories', 'is_flagged')  # Filter by categories
     filter_horizontal = ('categories',)  # Add a horizontal filter widget for many-to-many fields
+
+    def unflag_news(self, request, queryset):
+        updated = queryset.update(is_flagged=False)
+        self.message_user(request, f"{updated} news card(s) successfully unflagged.", messages.SUCCESS)
+    
+    # Register the custom action
+    actions = ['unflag_news']
 
 @admin.register(ExternalArticleID)
 class ExternalIDAdmin(admin.ModelAdmin):
