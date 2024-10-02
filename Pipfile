@@ -12,6 +12,8 @@ openai = "*"
 requests = "*"
 celery = "*"
 redis = "*"
+djoser = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"
