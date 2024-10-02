@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import timedelta
 import os
 from pathlib import Path
 from celery.schedules import crontab
@@ -151,6 +152,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('JWT',),
+   'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
 }
 
 AUTH_USER_MODEL = 'core.User'
@@ -163,4 +165,11 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'newsprovider.tasks.fetch_summarize_and_save',  # Task name
         'schedule': crontab(minute='*'),  # Run at the start of every hour
     },
+}
+
+DJOSER = {
+    'SERIALIZERS':{
+        'user_create': 'core.serializers.UserCreateSerializer',
+        'current_user': 'core.serializers.UserSerializer',
+    }
 }
