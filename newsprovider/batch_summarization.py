@@ -51,6 +51,40 @@ def clean_summary(summary):
     cleaned = re.sub(r'^\d+:\s*', '', summary.strip())
     return cleaned
 
+def call_marker_api(batch, max_retries:int = 3, wait_time: int = 2):
+    retries = 0
+    while retries < max_retries:
+        try:
+            # Call the API
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{'role': 'user', 'content': gptprompts.flagger_prompt + "\n\n".join(batch)}]
+            )
+
+            # Process the response to get flagged statuses
+            full_response = response.choices[0].message.content
+            print(f"Full MARKER API response: {full_response}")
+            responses = full_response.split(",")  # GPT has been instructed to supply comma-separated format
+
+            # Check if response length matches batch size
+            if len(responses) == len(batch):
+                return responses  # If correct, return responses
+
+            else:
+                print(f"Response length mismatch: expected {len(batch)}, got {len(responses)}")
+                
+        except Exception as e:
+            print(f"API call failed: {e}")
+
+        # Retry logic
+        retries += 1
+        print(f"Retrying {retries}/{max_retries}...")
+        time.sleep(wait_time)
+
+    raise Exception(f"Failed to get a valid response after {max_retries} attempts")
+
+
+
 def batch_flag_articles(articles, batch_size=10):
     flagged_statuses = [None] * len(articles)
     
@@ -60,15 +94,7 @@ def batch_flag_articles(articles, batch_size=10):
         prompts = [f"{article.content} <<END>>" for article in batch]
         
         try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{'role': 'user', 'content': gptprompts.flagger_prompt + "\n\n".join(prompts)}]
-            )
-            
-            # Process the response to get flagged statuses
-            full_response = response.choices[0].message.content
-            print(f"Full MARKER API response: {full_response}")
-            responses = full_response.split(",")  # GPT has been instructed to supply in comma-seperated format
+            responses = call_marker_api(prompts, wait_time=20)
             
             for idx, response in enumerate(responses):
                 article_idx = i + idx
@@ -76,9 +102,11 @@ def batch_flag_articles(articles, batch_size=10):
                     flagged_statuses[article_idx] = "yes" in response.lower()  # Set True/False based on response
 
             logger.info(f"Batch of {len(batch)} articles flagged successfully")
+
         except Exception as e:
             logger.error(f"Error flagging batch starting at index {i}: {str(e)}")
-    print(f"flagged_statuses: {flagged_statuses}")
+
+    # print(f"flagged_statuses: {flagged_statuses}")
     return flagged_statuses
 
 
