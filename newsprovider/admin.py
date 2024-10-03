@@ -13,7 +13,13 @@ class NewsCardAdmin(admin.ModelAdmin):
     list_filter = ('categories', 'is_flagged')  # Filter by categories
     filter_horizontal = ('categories',)  # Add a horizontal filter widget for many-to-many fields
 
+    
     def unflag_news(self, request, queryset):
+        # Check if the user has the custom permission
+        if not request.user.has_perm('newsprovider.can_unflag_news'):
+            self.message_user(request, "You do not have permission to unflag news.", messages.ERROR)
+            return
+
         updated = queryset.update(is_flagged=False)
         self.message_user(request, f"{updated} news card(s) successfully unflagged.", messages.SUCCESS)
     

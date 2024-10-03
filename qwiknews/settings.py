@@ -163,7 +163,7 @@ CELERY_BROKER_URL = 'redis://localhost:6379/1'
 CELERY_BEAT_SCHEDULE = {
     'fetch_summarize_save_every_minute': {
         'task': 'newsprovider.tasks.fetch_summarize_and_save',  # Task name
-        'schedule': crontab(minute='*'),  # Run at the start of every hour
+        'schedule': crontab(minute='*/5'),  # Run at the start of every hour
     },
 }
 

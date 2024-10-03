@@ -13,12 +13,13 @@ from newsprovider.models import ExternalArticleID, NewsCard
 API_KEY = "7346c6661e19434f8fb7fdf9eae6e406"
 BASE_URL = "https://api.worldnewsapi.com"
 
-def fetch_news_data(search_query: str = None, number: int = 30):
+def fetch_news_data(search_query: str = None, number: int = 30, offset: int = 0):
     url = f"{BASE_URL}/search-news"
     params = {
         "api-key": API_KEY,
         "q": search_query,
         "number": number,
+        "offset": offset,
         "language": "en",
     }
     

@@ -22,6 +22,11 @@ class NewsCard(models.Model):
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        permissions = [
+            ('can_unflag_news', 'Can unflag news'),
+        ]
 
 class AppUser(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

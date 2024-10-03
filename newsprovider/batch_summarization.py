@@ -103,6 +103,7 @@ def batch_summarize_articles(articles, batch_size=10):
             )
             
             full_response = response.choices[0].message.content
+            time.sleep(20) #this is a work around to the API rate limits 
             
             # Split the response into individual summaries
             summaries = full_response.split("Summary for Article")[1:]  # Remove the first empty split
