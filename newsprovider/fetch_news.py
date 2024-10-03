@@ -1,4 +1,5 @@
 import os
+import pickle
 import requests
 from django.utils import timezone
 from django.db import transaction
@@ -13,7 +14,28 @@ from newsprovider.models import ExternalArticleID, NewsCard
 API_KEY = "7346c6661e19434f8fb7fdf9eae6e406"
 BASE_URL = "https://api.worldnewsapi.com"
 
-def fetch_news_data(search_query: str = None, number: int = 30, offset: int = 0):
+PICKLE_FILE = 'offset_data.pkl'
+
+def load_offset() -> int:
+    """Load the offset value from the pickle file. If the file doesn't exist, return 0."""
+    if os.path.exists(PICKLE_FILE):
+        with open(PICKLE_FILE, 'rb') as file:
+            return pickle.load(file)
+    return 0  # Default offset if no file exists
+
+def save_offset(offset: int) -> None:
+    """Save the offset value to the pickle file."""
+    with open(PICKLE_FILE, 'wb') as file:
+        pickle.dump(offset, file)
+
+
+def fetch_news_data(search_query: str = None, number: int = 30, offset: int = None):
+    
+    if offset is None:
+        offset = load_offset()
+
+    print(f'Current offset value in fetch_news_data is :{offset}')
+
     url = f"{BASE_URL}/search-news"
     params = {
         "api-key": API_KEY,
@@ -28,18 +50,17 @@ def fetch_news_data(search_query: str = None, number: int = 30, offset: int = 0)
         response.raise_for_status()  # Raise an error for bad responses
         data = response.json()
 
-        # print(data)  # Add this line to see the full response
-
-
         if 'news' in data:
-            save_articles(data["news"])  # Save articles from the response
+            offset = save_articles(data["news"], offset)  # Save articles from the response
+            save_offset(offset) #save the new offset value to pickle
         else:
             print(f"Error fetching data: {data['status']}")
 
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
 
-def save_articles(articles):
+
+def save_articles(articles, offset: int):
     for article in articles:
         if not ExternalArticleID.objects.filter(external_id=article['id']).exists(): #Check if the ID exists within the external ID table
             news_card = NewsCard(
@@ -59,6 +80,9 @@ def save_articles(articles):
                 raise e
         else:
             print(f"Article with ID {article['id']} already exists.")
+            offset += 1
+            
+    return offset
 
 
 
