@@ -75,12 +75,14 @@ def save_articles(articles, offset: int):
                 with transaction.atomic():
                     news_card.save()
                     ExternalArticleID.objects.create(external_id=article['id'], news_card=news_card)
+                    offset += 1
+                    
             except Exception as e:
                 print(f"Failed to save article {article.get('id')}: {e}")
                 raise e
+                
         else:
             print(f"Article with ID {article['id']} already exists.")
-            offset += 1
             
     return offset
 
