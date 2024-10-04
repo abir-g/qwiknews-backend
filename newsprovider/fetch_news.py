@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import django
 import re
 import os
@@ -76,6 +77,9 @@ def remove_emojis(text):
 
 
 def save_articles(articles, offset: int):
+
+
+
     for article in articles:
         if not ExternalArticleID.objects.filter(external_id=article['id']).exists():  # Check if the ID exists within the external ID table
             
@@ -108,6 +112,16 @@ def save_articles(articles, offset: int):
             
         offset += 1
         
+    # Get current time
+    now = datetime.now()
+    previous_minute = now - timedelta(minutes=1)
+
+    # Reset offset if the current hour is different from the previous minute's hour
+    if now.hour != previous_minute.hour:
+        offset = 0  # Reset offset
+        print("Offset reset to 0.")
+
+
     return offset
 
 
