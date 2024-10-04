@@ -16,7 +16,7 @@ class NewsCard(models.Model):
     image = models.URLField(max_length=600, null=True)
     link = models.URLField(max_length=500)
     is_summarized = models.BooleanField(default=False)
-    is_flagged = models.BooleanField(default=False)
+    is_flagged = models.BooleanField(default=None, null=True)
     categories = models.ManyToManyField(Category, related_name='newscards')  # Many-to-many relationship
     timestamp = models.DateTimeField(auto_now_add=True)
 

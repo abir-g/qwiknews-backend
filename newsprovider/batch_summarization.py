@@ -41,6 +41,9 @@ client = OpenAI()
 BATCH_SIZE = 10 #Ensure that this batch size remains consistent for all the batch requests (flagging and summarization)
 
 
+
+
+
 # return all the unsummarized articles from the database 
 def fetch_unsummarized_articles():
     return NewsCard.objects.filter(is_summarized=False, id__gt=100)
@@ -158,7 +161,7 @@ def batch_summarize_articles(articles, batch_size=10):
 
 def process_summarized_articles(articles):
     summaries = batch_summarize_articles(articles)
-    flagged_statuses = batch_flag_articles(articles)
+    # flagged_statuses = batch_flag_articles(articles)
     
     logger.debug(f"Number of articles: {len(articles)}, Number of summaries: {len(summaries)}")
 
@@ -168,18 +171,18 @@ def process_summarized_articles(articles):
     
     with transaction.atomic():
         # pair each article to a summary
-        for article, summary, is_flagged in zip(articles, summaries, flagged_statuses):
+        for article, summary in zip(articles, summaries):
             if summary:
                 cleaned_summary = clean_summary(summary=summary)
                 article.summary = cleaned_summary
                 article.is_summarized = True
 
-                article.is_flagged = is_flagged
+                article.is_flagged = None
                 article.save()
                 logger.info(f"Article {article.id} updated with summary")
             else:
                 logger.warning(f"Failed to summarize article {article.id}: Empty or None summary")
 
-# # Usage
-articles = fetch_unsummarized_articles()
-process_summarized_articles(articles)
+# # # Usage
+# articles = fetch_unsummarized_articles()
+# process_summarized_articles(articles)

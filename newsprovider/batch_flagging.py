@@ -45,6 +45,10 @@ class FlaggingProcess:
         self.client = OpenAI()
         self.articles = self.fetch_unflagged_articles()  # Fetch unsummarized articles on initialization
 
+        if not self.articles:
+            logger.info("No articles to flag")
+            return
+
     # Return all the unsummarized articles from the database 
     def fetch_unflagged_articles(self):
         return NewsCard.objects.filter(is_flagged=None, id__gt=100)  # Remove id filter in production
@@ -114,6 +118,11 @@ class FlaggingProcess:
         return flagged_statuses
 
     def process_flagged_articles(self):
+        
+        if not self.articles:
+            logger.info("No articles to process for flagging.")
+            return  # Exit if no articles to process
+        
         flagged_statuses = self.batch_flag_articles()
 
         with transaction.atomic():

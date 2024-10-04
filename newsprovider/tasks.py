@@ -1,23 +1,39 @@
 import time
 from celery import shared_task
 from .fetch_news import fetch_news_data
-# from .summarization_task import process_summarized_articles, fetch_unsummarized_articles
-from .batch_summarization import fetch_unsummarized_articles, process_summarized_articles
+from .batch_summarizationv2 import SummarizationProcess
+from .batch_flagging import FlaggingProcess
 
 
 @shared_task
-def fetch_summarize_and_save():
-    print('Running MAIN task')
+def fetch_news():
+    print('Running fetch_news task')
 
     try:
-            
-        fetch_news_data() #Calls save_articles with saves the data in the db
-
-        time.sleep(2)
-
-        articles = fetch_unsummarized_articles() #Returns the articles in the db that have not been summarized
-        
-        process_summarized_articles(articles=articles) #Calls summarize_article (GPT-wrapper), and saves summary in the db
-        
+        fetch_news_data()  # Calls save_articles which saves the data in the db
     except Exception as e:
-        print(f"Error in running main task: {e}")
+        print(f"Error in running fetch_news task: {e}")
+
+
+
+@shared_task
+def summarize_articles(batch_size=10):
+    print('Running summarize_articles task')
+
+    try:
+        summarization_process = SummarizationProcess(batch_size=batch_size)
+        summarization_process.process_summarized_articles()  # Processes articles for summarization
+    except Exception as e:
+        print(f"Error in running summarize_articles task: {e}")
+
+
+
+@shared_task
+def flag_articles(batch_size=10):
+    print('Running flag_articles task')
+
+    try:
+        flagging_process = FlaggingProcess(batch_size=batch_size)
+        flagging_process.process_flagged_articles()  # Processes articles for flagging
+    except Exception as e:
+        print(f"Error in running flag_articles task: {e}")

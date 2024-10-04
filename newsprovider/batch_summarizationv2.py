@@ -45,6 +45,9 @@ class SummarizationProcess:
         self.batch_size = batch_size
         self.articles = self.fetch_unsummarized_articles()
 
+        if not self.articles:
+            logger.info("No articles to summarize")
+
     def fetch_unsummarized_articles(self):
         return NewsCard.objects.filter(is_summarized=False, id__gt=100)  # remove id filter for production
 
@@ -92,6 +95,10 @@ class SummarizationProcess:
         return all_summaries
 
     def process_summarized_articles(self):
+
+        if not self.articles:
+            logger.info('No articles to process for summarization')
+
         summaries = self.batch_summarize_articles()
 
         logger.debug(f"Number of articles: {len(self.articles)}, Number of summaries: {len(summaries)}")
