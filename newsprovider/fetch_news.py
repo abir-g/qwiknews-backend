@@ -1,9 +1,11 @@
+import django
+import re
 import os
 import pickle
 import requests
 from django.utils import timezone
 from django.db import transaction
-import django
+
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
@@ -60,30 +62,52 @@ def fetch_news_data(search_query: str = None, number: int = 30, offset: int = No
         print(f"Request failed: {e}")
 
 
+
+def remove_emojis(text):
+    """Remove emojis and special characters from the given text."""
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags
+        "]+", flags=re.UNICODE)
+    return emoji_pattern.sub(r'', text)
+
+
+
 def save_articles(articles, offset: int):
     for article in articles:
-        if not ExternalArticleID.objects.filter(external_id=article['id']).exists(): #Check if the ID exists within the external ID table
+        if not ExternalArticleID.objects.filter(external_id=article['id']).exists():  # Check if the ID exists within the external ID table
+            
+            # Sanitize title and content
+            title = article.get("title", "")
+            sanitized_title = remove_emojis(title)
+
+            content = article.get("text", "")
+            sanitized_content = remove_emojis(content)
+
             news_card = NewsCard(
-                title=article.get("title"),
-                content=article.get("text"),  
-                summary=None,  
-                image=article.get("image", None), 
-                link=article.get("url", ""), 
+                title=sanitized_title,
+                content=sanitized_content,
+                summary=None,
+                image=article.get("image", None),
+                link=article.get("url", ""),
                 is_summarized=False,
             )
             try:
                 with transaction.atomic():
                     news_card.save()
                     ExternalArticleID.objects.create(external_id=article['id'], news_card=news_card)
-                    offset += 1
-                    
+
             except Exception as e:
                 print(f"Failed to save article {article.get('id')}: {e}")
-                raise e
+                continue
                 
         else:
             print(f"Article with ID {article['id']} already exists.")
             
+        offset += 1
+        
     return offset
 
 

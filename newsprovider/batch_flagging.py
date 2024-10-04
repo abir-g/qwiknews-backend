@@ -111,6 +111,7 @@ class FlaggingProcess:
                         flagged_statuses[article_idx] = "yes" in response.lower()  # Set True/False based on response
 
                 logger.info(f"Batch of {len(batch)} articles flagged successfully")
+                time.sleep(20) #work around to api rate limits
 
             except Exception as e:
                 logger.error(f"Error flagging batch starting at index {i}: {str(e)}")
