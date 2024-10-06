@@ -34,15 +34,17 @@ django.setup()
 from newsprovider.models import NewsCard
 from .ai_prompt import GPTPrompts
 
-gptprompts = GPTPrompts()
+# gptprompts = GPTPrompts()
 
-client = OpenAI()
+# client = OpenAI()
 
 BATCH_SIZE = 10 #Ensure that this batch size remains consistent for all the batch requests (flagging and summarization)
 
 class SummarizationProcess:
     def __init__(self, batch_size: int = 10) -> None:
         self.batch_size = batch_size
+        self.gptprompts = GPTPrompts()
+        self.client = OpenAI()
         self.articles = self.fetch_unsummarized_articles()
 
         if not self.articles:
@@ -63,12 +65,12 @@ class SummarizationProcess:
             prompts = [f"Article {idx}: {article.content}" for idx, article in enumerate(batch, start=1)]
             
             try:
-                response = client.chat.completions.create(
+                response = self.client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
                         {
                             'role': 'system',
-                            'content': f"{gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number."
+                            'content': f"{self.gptprompts.summarize_prompt}"
                         },
                         {'role': 'user', 'content': "\n\n".join(prompts)}
                     ]

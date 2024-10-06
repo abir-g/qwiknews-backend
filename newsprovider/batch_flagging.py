@@ -18,7 +18,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(log_file),  # Log to a file specific to this script
+        logging.FileHandler(log_file, mode='a'),  # Log to a file specific to this script
         logging.StreamHandler()  # Optionally log to the console
     ]
 )
@@ -86,10 +86,10 @@ class FlaggingProcess:
                 logging.info(f"API call failed: {e}")
                 error_message = str(e)
 
-            # Retry logic
-            retries += 1
-            logging.info(f"Retrying {retries}/{max_retries}...")
-            time.sleep(wait_time)
+                # Retry logic
+                retries += 1
+                logging.info(f"Retrying {retries}/{max_retries}...")
+                time.sleep(wait_time)
 
         logger.warning(f"Failed to get a valid response after {max_retries} attempts, returning None for all items in batch")
         return [None] * len(batch)
@@ -108,7 +108,7 @@ class FlaggingProcess:
                 for idx, response in enumerate(responses):
                     article_idx = i + idx
                     if article_idx < len(flagged_statuses):
-                        flagged_statuses[article_idx] = "yes" in response.lower()  # Set True/False based on response
+                        flagged_statuses[article_idx] =  None if response is None else "yes" in response.lower()  # Set True/False based on response, or None if response fails
 
                 logger.info(f"Batch of {len(batch)} articles flagged successfully")
                 time.sleep(20) #work around to api rate limits
