@@ -8,31 +8,31 @@ from openai import OpenAI
 
 import logging
 
-# Get the current file's base name (without directory and extension)
-current_filename = os.path.splitext(os.path.basename(__file__))[0]
-
-# Set up logging configuration with a file handler specific to this file
-log_file = f"{current_filename}.log"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler(log_file, mode='a'),  # Log to a file specific to this script
-        logging.StreamHandler()  # Optionally log to the console
-    ]
-)
-
-# Set up the logger
-logger = logging.getLogger(current_filename)
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
-
-# Initialize Django
-django.setup()
-
 from newsprovider.models import NewsCard
 from .ai_prompt import GPTPrompts
+# # Get the current file's base name (without directory and extension)
+# current_filename = os.path.splitext(os.path.basename(__file__))[0]
+
+# # Set up logging configuration with a file handler specific to this file
+# log_file = f"{current_filename}.log"
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s [%(levelname)s] %(message)s',
+#     handlers=[
+#         logging.FileHandler(log_file, mode='a'),  # Log to a file specific to this script
+#         logging.StreamHandler()  # Optionally log to the console
+#     ]
+# )
+
+# Set up the logger
+logger = logging.getLogger('qwiknews')
+
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
+
+# # Initialize Django
+# django.setup()
+
 
 # BATCH_SIZE = 10 #Ensure that this batch size remains consistent for all the batch requests (flagging and summarization)
 

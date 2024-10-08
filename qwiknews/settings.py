@@ -183,3 +183,43 @@ DJOSER = {
         'current_user': 'core.serializers.UserSerializer',
     }
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',  # Set level to INFO to log only INFO and above
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'info.log'),  # Log file path
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',  # Set level to INFO to log only INFO and above
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # Set to INFO level for production
+            'propagate': True,
+        },
+        'qwiknews': {  # Your application's main logger
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # Set this to INFO to avoid logging DEBUG messages
+            'propagate': True,
+        },
+    },
+}
