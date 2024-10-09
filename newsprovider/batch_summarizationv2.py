@@ -50,7 +50,7 @@ class SummarizationProcess:
             logger.info("No articles to summarize")
 
     def fetch_unsummarized_articles(self):
-        return NewsCard.objects.filter(is_summarized=False, id__gt=100)  # remove id filter for production
+        return NewsCard.objects.filter(is_summarized=False, id__gt=100)[:self.batch_size]  # remove id filter for production
 
     def batch_summarize_articles(self):
         # Initialize the all_summaries list 
@@ -62,43 +62,71 @@ class SummarizationProcess:
             
             # Add an index to each article in the batch and create the prompts to be fed to OpenAI
             prompts = [f"Article {idx}: {article.content}" for idx, article in enumerate(batch, start=1)]
+
+            logger.info(f'Prompts in batch_summarize being passed to GPT: \n{prompts}')
             
-            try:
-                response = self.client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {
-                            'role': 'system',
-                            'content': f"{self.gptprompts.summarize_prompt}"
-                        },
-                        {'role': 'user', 'content': "\n\n".join(prompts)}
-                    ]
-                )
-                
-                full_response = response.choices[0].message.content
-                time.sleep(20)  # API rate limit workaround
-                
-                # Split the response into individual summaries
-                summaries = full_response.split("Summary for Article")[1:]  # Remove the first empty split
-                
-                # Add summaries by their index to the initial list
-                for idx, summary in enumerate(summaries):
-                    article_idx = i + idx
-                    if article_idx < len(all_summaries):
-                        all_summaries[article_idx] = summary.strip()
-                        logger.debug(f"Processed summary for article at index {article_idx}: {all_summaries[article_idx][:50]}...")
-                
-                logger.info(f"Batch of {len(batch)} articles summarized successfully")
-            except Exception as e:
-                logger.error(f"Error summarizing batch starting at index {i}: {str(e)}")
-        
-        time.sleep(5)
+
+            retries = 3  # Number of retries for the API call
+            error_message = ""  # Initialize error message
+            for attempt in range(retries):
+                try:
+                    # Construct the prompt with the error message if available
+                    prompt_content = f"{self.gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number."
+                    if error_message:
+                        prompt_content += f" {error_message}"
+
+                    response = self.client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                'role': 'system',
+                                'content': prompt_content
+                            },
+                            {'role': 'user', 'content': "\n\n".join(prompts)}
+                        ]
+                    )
+
+                    full_response = response.choices[0].message.content
+                    time.sleep(20)  # API rate limit workaround
+
+                    logger.info(full_response)
+                    # Split the response into individual summaries
+                    summaries = full_response.split("Summary for Article")[1:]  # Remove the first empty split
+
+                    logger.info(f'Summaries in batch_summarize as GPT response: \n{summaries}')
+
+                    # Check if the number of summaries matches the expected batch size
+                    if len(summaries) != len(batch):
+                        logger.warning(f"Mismatch: Expected {len(batch)} summaries but received {len(summaries)} summaries for batch starting at index {i}. Retrying...")
+                        error_message = (f"Mismatch: Expected {len(batch)} summaries but received {len(summaries)}")
+                        continue  # Retry the API call
+
+                    # Add summaries by their index to the initial list
+                    for idx, summary in enumerate(summaries):
+                        article_idx = i + idx
+                        if article_idx < len(all_summaries):
+                            all_summaries[article_idx] = summary.strip() if summary else None
+                            logger.info(f"Processed summary for article at index {article_idx}: {all_summaries[article_idx][:50]}...")
+
+                    logger.info(f"Batch of {len(batch)} articles summarized successfully")
+                    break  # Exit the retry loop if successful
+
+                except Exception as e:
+                    logger.error(f"Error summarizing batch starting at index {i} on attempt {attempt + 1}: {str(e)}")
+                    # If this was the last attempt, log the failure
+                    if attempt == retries - 1:
+                        logger.error(f"Failed to summarize batch starting at index {i} after {retries} attempts.")
+
+            # Optional sleep between batches to avoid hitting rate limits
+            time.sleep(5)
+
         return all_summaries
 
     def process_summarized_articles(self):
 
         if not self.articles:
             logger.info('No articles to process for summarization')
+            return
 
         summaries = self.batch_summarize_articles()
 
@@ -106,7 +134,7 @@ class SummarizationProcess:
 
         # Add an index to the summaries list
         for idx, summary in enumerate(summaries):
-            logger.debug(f"Summary at index {idx}: {summary[:50] if summary else 'None'}...")
+            logger.info(f"Summary at index {idx}: {summary[:50] if summary else 'None'}...")
 
         with transaction.atomic():
             # pair each article to a summary
