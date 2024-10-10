@@ -8,7 +8,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(NewsCard)
 class NewsCardAdmin(admin.ModelAdmin):
-    list_display = ('title', 'summary', 'is_flagged')  # Columns to display in the list view
+    list_display = ('id', 'title', 'summary', 'is_flagged')  # Columns to display in the list view
     search_fields = ('title', 'summary', 'link')  # Fields to search by
     list_filter = ('categories', 'is_flagged')  # Filter by categories
     filter_horizontal = ('categories',)  # Add a horizontal filter widget for many-to-many fields
