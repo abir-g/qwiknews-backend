@@ -60,7 +60,8 @@ class SummarizationProcess:
     def process_summaries(self, full_response, batch_size):
         summaries = full_response.split("Summary for Article")[1:]
         if len(summaries) != batch_size:
-            error_message = (f"Expected {batch_size} summaries, got {len(summaries)}")
+            # error_message = (f"Expected {batch_size} summaries, got {len(summaries)}")
+            error_message = (f"Ensure to return {batch_size} summaries")
             return None, error_message
         return [summary.strip() for summary in summaries], None
 
@@ -68,9 +69,11 @@ class SummarizationProcess:
     @retry(retries=3, delay=5)
     def summarize_batch(self, prompts, error_message):
         # Construct the system content and include error_message if present
-        system_content = f"{self.gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number."
-        if error_message:
-            system_content += f" {error_message}"
+        system_content = f"{self.gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number. 
+            Ensure to return {len(prompts)} summaries."
+        
+        # if error_message:
+        #     system_content += f" {error_message}"
 
         full_response = self.call_openai_api(prompts, system_content)
         logger.info(f"API Response: {full_response[:100]}...")
