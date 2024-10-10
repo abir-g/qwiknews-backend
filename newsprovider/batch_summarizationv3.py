@@ -44,15 +44,18 @@ class SummarizationProcess:
 
     @retry(retries=3, delay=2)
     def call_openai_api(self, prompts, system_content):
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {'role': 'system', 'content': system_content},
-                {'role': 'user', 'content': "\n\n".join(prompts)}
-            ]
-        )
-        return response.choices[0].message.content
-
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {'role': 'system', 'content': system_content},
+                    {'role': 'user', 'content': "\n\n".join(prompts)}
+                ]
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error in OpenAI API call: {e}")
+            raise
 
     def process_summaries(self, full_response, batch_size):
         summaries = full_response.split("Summary for Article")[1:]
