@@ -62,6 +62,8 @@ class FlaggingProcess:
             try:
                 # Construct the API prompt with flagger prompt
                 prompt_content = self.gptprompts.flagger_prompt + "\n\n".join(batch)
+
+                logger.info(f"Complete prompts: {prompt_content}")
                 
                 # If there was a previous error, include the error message in the prompt
                 if error_message:
@@ -75,32 +77,33 @@ class FlaggingProcess:
 
                 # Process the API response
                 full_response = response.choices[0].message.content
-                logging.info(f"Full flagging API response: {full_response}")
+                logger.info(f"Full flagging API response: {full_response}")
 
                 # Split the response (assuming comma-separated values)
                 responses = full_response.split(",")
 
-                # Check if response length matches the batch size
-                if len(responses) == len(batch):
-                    return responses  # Return responses if correct
+                logger.info(f"Responses object: {responses}")
 
-                # If lengths don't match, raise an exception to trigger retry
-                error_message = f"Response length mismatch: expected {len(batch)}, got {len(responses)}"
-                logging.warning(error_message)
-                retries += 1  # Increment retry counter
+                # Check if response length matches the batch size
+                if len(responses) != len(batch):
+                    error_message = f"Response length mismatch: expected {len(batch)}, got {len(responses)}"
+                    logger.warning(error_message)
+                    raise ValueError(error_message)  # This will trigger the except block
+
+                return responses  # Return responses if correct
 
             except Exception as e:
-                logging.error(f"Error during flagging API call: {e}")
-                error_message = str(e)
+                logger.error(f"Error during flagging API call: {e}")
+                # error_message = str(e)
                 
                 retries += 1
-                if retries >= max_retries:
-                    logging.error(f"Max retries ({max_retries}) reached. Returning None for all batch items.")
-                    return [None] * len(batch)  # Return None for each item in the batch
-
+    
             # Wait before retrying
-            logging.info(f"Retrying {retries}/{max_retries} after {wait_time} seconds...")
+            logger.info(f"Retrying {retries}/{max_retries} after {wait_time} seconds...")
             time.sleep(wait_time)  # Delay before retry
+
+        logger.error(f"Max retries ({max_retries}) reached. Returning None for all batch items.")
+        return [None] * len(batch)  # Return None for each item in the batch
 
     def batch_flag_articles(self):
         flagged_statuses = [None] * len(self.articles)
@@ -109,6 +112,8 @@ class FlaggingProcess:
             batch = self.articles[i:i + self.batch_size]
             # Create a prompt to ask the AI about potential privacy walls
             prompts = [f"{article.content} <<END>>" for article in batch]
+
+            logger.info(f"Complete prompts: {prompts}")
 
             try:
                 responses = self.call_flagging_api(prompts, wait_time=20)

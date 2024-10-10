@@ -39,7 +39,7 @@ logger = logging.getLogger('qwiknews')
 
 class FlaggingProcess:
     
-    def __init__(self, batch_size):
+    def __init__(self, batch_size=20):
         self.batch_size = batch_size
         self.gptprompts = GPTPrompts()
         self.client = OpenAI()
@@ -51,48 +51,56 @@ class FlaggingProcess:
 
     # Return all the unsummarized articles from the database 
     def fetch_unflagged_articles(self):
-        return NewsCard.objects.filter(is_flagged=None, id__gt=100)  # Remove id filter in production
+        return NewsCard.objects.filter(is_flagged=None, id__gt=100)[:self.batch_size]  # Remove id filter in production
+    
 
-    def call_flagging_api(self, batch, max_retries:int = 3, wait_time: int = 2):
+    def call_flagging_api(self, batch, max_retries: int = 3, wait_time: int = 2):
         retries = 0
         error_message = ''  # Initialize the error_message variable
+
         while retries < max_retries:
             try:
-                messages=[{'role': 'user', 'content': self.gptprompts.flagger_prompt + "\n\n".join(batch)}]
+                # Construct the API prompt with flagger prompt
+                prompt_content = self.gptprompts.flagger_prompt + "\n\n".join(batch)
+                
+                # If there was a previous error, include the error message in the prompt
+                if error_message:
+                    prompt_content += f"\n\nPrevious Error: {error_message}"
 
-                # If it's a retry, add the error message to the prompt
-                if retries > 0:
-                    messages[0]['content'] += f"\n\nPrevious Error: {error_message}"
-
-                # Call the API
+                # API call
                 response = self.client.chat.completions.create(
                     model="gpt-4o-mini",
-                    messages=messages
+                    messages=[{'role': 'user', 'content': prompt_content}]
                 )
 
-                # Process the response to get flagged statuses
+                # Process the API response
                 full_response = response.choices[0].message.content
-                logging.info(f"Full MARKER API response: {full_response}")
+                logging.info(f"Full flagging API response: {full_response}")
 
-                responses = full_response.split(",")  # GPT has been instructed to supply comma-separated format
+                # Split the response (assuming comma-separated values)
+                responses = full_response.split(",")
 
-                # Check if response length matches batch size
+                # Check if response length matches the batch size
                 if len(responses) == len(batch):
-                    return responses  # If correct, return responses
-                else:
-                    error_message = f"Response length mismatch: expected {len(batch)}, got {len(responses)}"
-                    
+                    return responses  # Return responses if correct
+
+                # If lengths don't match, raise an exception to trigger retry
+                error_message = f"Response length mismatch: expected {len(batch)}, got {len(responses)}"
+                logging.warning(error_message)
+                retries += 1  # Increment retry counter
+
             except Exception as e:
-                logging.info(f"API call failed: {e}")
+                logging.error(f"Error during flagging API call: {e}")
                 error_message = str(e)
-
-                # Retry logic
+                
                 retries += 1
-                logging.info(f"Retrying {retries}/{max_retries}...")
-                time.sleep(wait_time)
+                if retries >= max_retries:
+                    logging.error(f"Max retries ({max_retries}) reached. Returning None for all batch items.")
+                    return [None] * len(batch)  # Return None for each item in the batch
 
-        logger.warning(f"Failed to get a valid response after {max_retries} attempts, returning None for all items in batch")
-        return [None] * len(batch)
+            # Wait before retrying
+            logging.info(f"Retrying {retries}/{max_retries} after {wait_time} seconds...")
+            time.sleep(wait_time)  # Delay before retry
 
     def batch_flag_articles(self):
         flagged_statuses = [None] * len(self.articles)
