@@ -61,9 +61,9 @@ class FlaggingProcess:
         while retries < max_retries:
             try:
                 # Construct the API prompt with flagger prompt
-                prompt_content = self.gptprompts.flagger_prompt + "\n\n".join(batch)
+                prompt_content = self.gptprompts.flagger_prompt + f"Ensure to return {len(batch)} articles" + "\n\n".join(batch)
 
-                logger.info(f"Complete prompts: {prompt_content}")
+                logger.debug(f"Complete prompts: {prompt_content}")
                 
                 # If there was a previous error, include the error message in the prompt
                 if error_message:
