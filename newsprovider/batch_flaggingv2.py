@@ -66,8 +66,8 @@ class FlaggingProcess:
                 logger.debug(f"Complete prompts: {prompt_content}")
                 
                 # If there was a previous error, include the error message in the prompt
-                if error_message:
-                    prompt_content += f"\n\nPrevious Error: {error_message}"
+                # if error_message:
+                #     prompt_content += f"\n\nPrevious Error: {error_message}"
 
                 # API call
                 response = self.client.chat.completions.create(
@@ -113,7 +113,7 @@ class FlaggingProcess:
             # Create a prompt to ask the AI about potential privacy walls
             prompts = [f"{article.content} <<END>>" for article in batch]
 
-            logger.info(f"Complete prompts: {prompts}")
+            logger.debug(f"Complete prompts: {prompts}")
 
             try:
                 responses = self.call_flagging_api(prompts, wait_time=20)
