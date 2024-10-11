@@ -3,7 +3,7 @@ from django.shortcuts import render
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import mixins
 from rest_framework import viewsets
-from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.exceptions import ValidationError, NotAuthenticated
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
@@ -21,7 +21,7 @@ class NewsCardViewSet(mixins.ListModelMixin,
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = NewsCard.objects.filter(is_flagged=0).order_by('-timestamp')
+        queryset = NewsCard.objects.filter(is_flagged=0, is_summarized=1).order_by('-timestamp')
         
         # Get query parameters
         category_id = self.request.query_params.get('category_id')
@@ -47,16 +47,14 @@ class NewsCardViewSet(mixins.ListModelMixin,
         return queryset
 
     def paginate_queryset(self, queryset):
-        # If user is authenticated, use normal pagination
         if self.request.user.is_authenticated:
             return super().paginate_queryset(queryset)
-        # If user is not authenticated, limit to the first page and raise an error for further pages
         else:
-            page_size = 10  # Limit the page size to 1 if not authenticated
+            page_size = 10
             self.paginator.page_size = page_size
             page = super().paginate_queryset(queryset)
             
             if self.paginator.page.number > 1:
-                raise PermissionDenied("Please sign in to view more news content.")
+                raise NotAuthenticated("Please sign in to view more news content.")
             
             return page
