@@ -69,8 +69,8 @@ class SummarizationProcess:
     @retry(retries=3, delay=5)
     def summarize_batch(self, prompts, error_message):
         # Construct the system content and include error_message if present
-        system_content = f"{self.gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number. 
-            Ensure to return {len(prompts)} summaries."
+        system_content = f"""{self.gptprompts.summarize_prompt}. Provide a summary for each article, prefixed with 'Summary for Article X:', where X is the article number. 
+            Ensure to return {len(prompts)} summaries."""
         
         # if error_message:
         #     system_content += f" {error_message}"
