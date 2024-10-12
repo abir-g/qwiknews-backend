@@ -12,7 +12,7 @@ from django.db import transaction
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'qwiknews.settings')
 django.setup()
 
-from newsprovider.models import ExternalArticleID, NewsCard
+from newsprovider.models import Category, ExternalArticleID, NewsCard
 
 API_KEY = "7346c6661e19434f8fb7fdf9eae6e406"
 BASE_URL = "https://api.worldnewsapi.com"
@@ -90,6 +90,8 @@ def save_articles(articles, offset: int):
             content = article.get("text", "")
             sanitized_content = remove_emojis(content)
 
+            category_name = article.get("category", None)  # Get the category name from the article
+
             news_card = NewsCard(
                 title=sanitized_title,
                 content=sanitized_content,
@@ -97,11 +99,25 @@ def save_articles(articles, offset: int):
                 image=article.get("image", None),
                 link=article.get("url", ""),
                 is_summarized=False,
+                categories=article.get("category", None)
             )
             try:
                 with transaction.atomic():
                     news_card.save()
                     ExternalArticleID.objects.create(external_id=article['id'], news_card=news_card)
+
+                    # Handle category association
+                    if category_name:
+                        # Normalize category_name to lowercase to ensure case-insensitive matching
+                        category_name_lower = category_name.lower()
+                        
+                        # Try to find the category with a case-insensitive match
+                        category, created = Category.objects.get_or_create(
+                            name__iexact=category_name_lower,  # Case-insensitive query
+                            defaults={'name': category_name_lower}  # If not found, create with the lowercase
+                        )
+                        # Add the category to the ManyToManyField
+                        news_card.categories.add(category)
 
             except Exception as e:
                 print(f"Failed to save article {article.get('id')}: {e}")

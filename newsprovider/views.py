@@ -21,7 +21,7 @@ class NewsCardViewSet(mixins.ListModelMixin,
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = NewsCard.objects.filter(is_flagged=0, is_summarized=1).order_by('-timestamp')
+        queryset = NewsCard.objects.filter(is_flagged=0, is_summarized=1, image__isnull=False, image__gt="").order_by('-timestamp')
         
         # Get query parameters
         category_id = self.request.query_params.get('category_id')
@@ -46,15 +46,17 @@ class NewsCardViewSet(mixins.ListModelMixin,
 
         return queryset
 
-    def paginate_queryset(self, queryset):
-        if self.request.user.is_authenticated:
-            return super().paginate_queryset(queryset)
-        else:
-            page_size = 10
-            self.paginator.page_size = page_size
-            page = super().paginate_queryset(queryset)
+    # this logic handles the pagination logic from the backend which should be active in production.
+
+    # def paginate_queryset(self, queryset):
+    #     if self.request.user.is_authenticated:
+    #         return super().paginate_queryset(queryset)
+    #     else:
+    #         page_size = 10
+    #         self.paginator.page_size = page_size
+    #         page = super().paginate_queryset(queryset)
             
-            if self.paginator.page.number > 1:
-                raise NotAuthenticated("Please sign in to view more news content.")
+    #         if self.paginator.page.number > 1:
+    #             raise NotAuthenticated("Please sign in to view more news content.")
             
-            return page
+    #         return page
