@@ -16,11 +16,21 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from core.views import CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
 from debug_toolbar.toolbar import debug_toolbar_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.jwt')),
-    path('newsprovider/', include('newsprovider.urls'))
+
+    # Djoser URLs (registration, password reset, etc.)
+    path('auth/', include('djoser.urls')),  # Non-JWT Djoser URLs
+
+    # Custom JWT endpoints
+    path('auth/jwt/create/', CustomTokenObtainPairView.as_view(), name='custom_token_obtain_pair'),
+    path('auth/jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Other app URLs
+    path('newsprovider/', include('newsprovider.urls')),
+
 ] + debug_toolbar_urls()

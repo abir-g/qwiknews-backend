@@ -187,6 +187,12 @@ DJOSER = {
     }
 }
 
+# Use this for secure session cookies
+SESSION_COOKIE_SECURE = True
+
+# Use this for secure CSRF cookies
+CSRF_COOKIE_SECURE = True
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
