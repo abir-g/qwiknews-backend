@@ -14,6 +14,7 @@ from datetime import timedelta
 import os
 from pathlib import Path
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -154,7 +155,8 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('JWT',),
-   'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
+   'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+   'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Match this with your cookie max_age
 }
 
 AUTH_USER_MODEL = 'core.User'
@@ -188,10 +190,10 @@ DJOSER = {
 }
 
 # Use this for secure session cookies
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False if DEBUG else True
 
 # Use this for secure CSRF cookies
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = False if DEBUG else True
 
 LOGGING = {
     'version': 1,
@@ -235,8 +237,16 @@ LOGGING = {
 
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_CREDENTIALS = True
 else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',
         # Add other domains if necessary
     ]
+    CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'access-control-allow-origin',
+]
+
+SESSION_COOKIE_SAMESITE = 'Lax'  # or 'None' if you need cross-site access, but this requires HTTPS

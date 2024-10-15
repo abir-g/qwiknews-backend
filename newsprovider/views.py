@@ -48,15 +48,15 @@ class NewsCardViewSet(mixins.ListModelMixin,
 
     # this logic handles the pagination logic from the backend which should be active in production.
 
-    # def paginate_queryset(self, queryset):
-    #     if self.request.user.is_authenticated:
-    #         return super().paginate_queryset(queryset)
-    #     else:
-    #         page_size = 10
-    #         self.paginator.page_size = page_size
-    #         page = super().paginate_queryset(queryset)
+    def paginate_queryset(self, queryset):
+        if self.request.user.is_authenticated:
+            return super().paginate_queryset(queryset)
+        else:
+            page_size = 10
+            self.paginator.page_size = page_size
+            page = super().paginate_queryset(queryset)
             
-    #         if self.paginator.page.number > 1:
-    #             raise NotAuthenticated("Please sign in to view more news content.")
+            if self.paginator.page.number > 1:
+                raise NotAuthenticated("Please sign in to view more news content.")
             
-    #         return page
+            return page
