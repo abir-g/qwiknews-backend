@@ -99,7 +99,7 @@ def save_articles(articles, offset: int):
                 image=article.get("image", None),
                 link=article.get("url", ""),
                 is_summarized=False,
-                categories=article.get("category", None)
+                # categories=article.get("category", None)
             )
             try:
                 with transaction.atomic():
