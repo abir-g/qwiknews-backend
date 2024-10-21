@@ -3,6 +3,9 @@ from celery import shared_task
 from .fetch_news import fetch_news_data
 from .batch_summarizationv3 import SummarizationProcess
 from .batch_flaggingv2 import FlaggingProcess
+from .models import NewsCard
+from django.db.models import Count
+from django.db import transaction
 
 # Get the logger for this module
 logger = logging.getLogger('qwiknews')
@@ -38,3 +41,31 @@ def flag_articles(batch_size=10):
         flagging_process.process_flagged_articles()  # Processes articles for flagging
     except Exception as e:
         logger.error(f"Error in running flag_articles task: {e}")
+
+@shared_task
+def remove_duplicate_news_cards():
+    logger.info('Running remove_duplicate_news_cards task')
+
+    try:
+        with transaction.atomic():
+            # Find duplicate titles
+            duplicates = NewsCard.objects.values('title').annotate(
+                title_count=Count('title')
+            ).filter(title_count__gt=1)
+
+            for duplicate in duplicates:
+                title = duplicate['title']
+                # Get all news cards with this title, ordered by id (assuming newer entries have higher ids)
+                cards = NewsCard.objects.filter(title=title).order_by('id')
+                
+                # Keep the latest entry (last in the list) and delete the rest
+                to_delete = cards[:-1]
+                deleted_count = to_delete.delete()[0]
+                
+                logger.info(f"Deleted {deleted_count} duplicate entries for title: {title}")
+
+        logger.info('Finished removing duplicate news cards')
+    except Exception as e:
+        logger.error(f"Error in running remove_duplicate_news_cards task: {e}")
+
+# Add this task to your CELERY_BEAT_SCHEDULE in settings.py to run it periodically

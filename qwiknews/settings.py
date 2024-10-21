@@ -167,7 +167,7 @@ CELERY_BROKER_URL = 'redis://localhost:6379/1'
 CELERY_BEAT_SCHEDULE = {
     'fetch_news_every_3_minutes': {
         'task': 'newsprovider.tasks.fetch_news',  # Task name for fetching news
-        'schedule': crontab(minute='*/3'),  # Run every 3 minutes
+        'schedule': crontab(minute='*/6'),  # Run every 6 minutes
     },
 
     'summarize_articles_every_alternate_minute': {
@@ -179,6 +179,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'newsprovider.tasks.flag_articles',
         'schedule': crontab(minute='0-58/2'),  # Run on even minutes
         'args': (10,),
+    },
+
+    'remove_duplicate_news_cards_daily': {
+        'task': 'newsprovider.tasks.remove_duplicate_news_cards',
+        'schedule': crontab(hour=0, minute=0),  # Run daily at midnight
+    },
+
+    'remove_duplicate_news_cards_hourly': {
+        'task': 'newsprovider.tasks.remove_duplicate_news_cards',
+        'schedule': crontab(minute=0),  # Run every hour at the start of the hour
     },
 }
 
