@@ -1,0 +1,3 @@
+predeployment notes:
+
+blacklist token and provide route auth/users/logout/
